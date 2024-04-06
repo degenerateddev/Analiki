@@ -20,21 +20,29 @@
 </button>
 
 {#if showContent}
-    <div class="absolute inset-0 flex flex-col justify-center p-10 bg-purple-900 bg-opacity-50" on:click={() => showContent = !showContent}>
-        <table>
-            <tr>
-              <th>Links</th>
-              <th>IWLinks</th>
-              <th>Sources</th>
-            </tr>
-            <tr>
-                <td>{links.length}</td>
-                <td>{iwlinks.length}</td>
-                <td>{sources.length}</td>
-            </tr>
-        </table>
-        <div class="relative w-[50vw] bg-white overflow-y-scroll" on:click={stopPropagation}>
-            {@html text}
+    <div class="absolute inset-0 p-10 bg-purple-900 bg-opacity-50" on:click={() => showContent = !showContent}>
+        <div class="flex justify-center">
+            <table class="text-center table-auto space-x-4">
+                <thead>
+                    <tr>
+                        <th class="px-4">Links</th>
+                        <th class="px-4">IWLinks</th>
+                        <th class="px-4">Sources</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="px-4">{links.length}</td>
+                        <td class="px-4">{iwlinks.length}</td>
+                        <td class="px-4">{sources.length}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="flex justify-center">
+            <div class="relative w-[50vw] bg-white overflow-y-scroll" on:click={stopPropagation}>
+                {@html text}
+            </div>
         </div>
     </div>
 {/if}
