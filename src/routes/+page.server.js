@@ -3,7 +3,7 @@ import { reduceJSON } from '$lib';
 
 /** @type {import('./$types').Actions} */
 export const actions = {
-    default: async (event) => {
+    get: async (event) => {
         const data = await event.request.formData();
         const query = data.get("query");
 
@@ -31,11 +31,10 @@ export const actions = {
             let data = await response.json();
 
             if ("parse" in data) {
-                data = reduceJSON(data);
+                let article = reduceJSON(data);
                 
                 return {
-                    success: true,
-                    data
+                    article
                 };
             }
 
@@ -54,16 +53,55 @@ export const actions = {
             });
 
             if (response.ok) {
-                let data = await response.json();
-                data = reduceJSON(data);
+                let article = await response.json();
+                article = reduceJSON(article);
 
                 return {
-                    success: true,
-                    data
+                    article
                 };
             }
         }
 
         return fail(500, { error: "Failed to fetch wiki data..." });
+    },
+
+    crawl: async (event) => {
+        const data = await event.request.formData();
+        const articles = data.get("articles");
+
+        if (!articles) {
+            return fail(400, { articles, articles_missing: true });
+        }
+
+        const articlesList = articles.split(",");
+
+        if (articlesList.length === 0) {
+            return fail(400, { articles, articles_missing: true });
+        }
+
+        let fetchPromises = articlesList.map(article => {
+            return fetch(`https://en.wikipedia.org/w/api.php?action=parse&page=${encodeURIComponent(article)}&format=json&origin=*`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                }
+            }).then(response => {
+                if (response.ok) {
+                    return response.json().then(data => {
+                        data = reduceJSON(data);
+                        return data;
+                    });
+                }
+            }).catch(error => {
+                console.error(`Error fetching article ${article}:`, error);
+                return fail(500, { error: "Failed to fetch wiki data..." });
+            });
+        });
+        
+        const allData = await Promise.all(fetchPromises);
+
+        return {
+            articles: allData
+        };
     }
 };

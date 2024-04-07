@@ -1,15 +1,13 @@
 export const reduceJSON = (data) => {
-    console.log(data)
-
     const { parse } = data;
-    const { title, text, links, externallinks, iwlinks } = parse;
+    const { title, text, links, externallinks } = parse;
+    const linksReduced = links.filter((link) => link.ns === 0).map((link) => link["*"]);
 
     return {
         title,
         text: text["*"],
-        links: links,
-        sources: externallinks,
-        iwlinks: iwlinks
+        links: linksReduced,
+        sources: externallinks
         //categories: categories.map((category) => category["*"])
     };
 }
