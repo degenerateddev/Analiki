@@ -80,21 +80,51 @@ export const actions = {
         }
 
         let fetchPromises = articlesList.map(article => {
-            return fetch(`https://en.wikipedia.org/w/api.php?action=parse&page=${encodeURIComponent(article)}&format=json&origin=*`, {
-                method: "GET",
-                headers: {
-                    "Content-Type": "application/json",
-                }
-            }).then(response => {
-                if (response.ok) {
-                    return response.json().then(data => {
-                        data = reduceJSON(data);
-                        return data;
+            return new Promise((resolve, reject) => {
+                const maxRetries = 3;
+                let retries = 0;
+        
+                const fetchWithRetry = () => {
+                    const timeout = setTimeout(() => {
+                        if (retries < maxRetries) {
+                            retries++;
+                            console.log(`Retry ${retries} for ${article}`);
+                            clearTimeout(timeout);
+                            fetchWithRetry();
+                        } else {
+                            reject(new Error("Request timed out"));
+                        }
+                    }, 20000); // Set timeout to 20 seconds
+        
+                    fetch(`https://en.wikipedia.org/w/api.php?action=parse&page=${encodeURIComponent(article)}&format=json&origin=*`, {
+                        method: "GET",
+                        headers: {
+                            "Content-Type": "application/json",
+                        }
+                    }).then(response => {
+                        clearTimeout(timeout);
+                        if (response.ok) {
+                            return response.json().then(data => {
+                                data = reduceJSON(data);
+                                console.log(data);
+                                resolve(data);
+                            });
+                        } else {
+                            reject(new Error("Response not OK"));
+                        }
+                    }).catch(error => {
+                        if (retries < maxRetries) {
+                            retries++;
+                            console.log(`Retry ${retries} for ${article}`);
+                            clearTimeout(timeout);
+                            fetchWithRetry();
+                        } else {
+                            reject(error);
+                        }
                     });
-                }
-            }).catch(error => {
-                console.error(`Error fetching article ${article}:`, error);
-                return fail(500, { error: "Failed to fetch wiki data..." });
+                };
+        
+                fetchWithRetry();
             });
         });
         

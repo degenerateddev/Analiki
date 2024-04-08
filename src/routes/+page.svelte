@@ -83,12 +83,21 @@
                 }
             }>
                 {#if main.links.length > 0}
-                    <input type="hidden" name="articles" value="{main.links.join(",")}" />
-
+                    <input type="hidden" name="articles" value={Object.keys(furtherGenerations).length > 0 ? 
+                        [...new Set(furtherGenerations[Object.keys(furtherGenerations).length - 1].map(article => article.links.join(",")))] 
+                        : 
+                        [...new Set(main.links.join(",").split(","))]}
+                    />
                     <button type="submit">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="animate-bounce w-6 h-6">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 5.25 7.5 7.5 7.5-7.5m-15 6 7.5 7.5 7.5-7.5" />
-                        </svg>
+                        {#if isLoading}
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="animate-spin w-6 h-6">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
+                            </svg>                          
+                        {:else}
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="animate-bounce w-6 h-6">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 5.25 7.5 7.5 7.5-7.5m-15 6 7.5 7.5 7.5-7.5" />
+                            </svg>
+                        {/if}
                     </button>
                 {/if}
             </form>
