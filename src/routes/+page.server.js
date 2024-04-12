@@ -79,57 +79,29 @@ export const actions = {
             return fail(400, { articles, articles_missing: true });
         }
 
-        let fetchPromises = articlesList.map(article => {
-            return new Promise((resolve, reject) => {
-                const maxRetries = 3;
-                let retries = 0;
+        //https://stackoverflow.com/questions/30381974/wikipedia-api-how-to-get-all-links-from-multiple-pages
+        //https://stackoverflow.com/questions/45269278/how-to-continue-to-call-wikipedia-api-the-500-limit
         
-                const fetchWithRetry = () => {
-                    const timeout = setTimeout(() => {
-                        if (retries < maxRetries) {
-                            retries++;
-                            console.log(`Retry ${retries} for ${article}`);
-                            clearTimeout(timeout);
-                            fetchWithRetry();
-                        } else {
-                            reject(new Error("Request timed out"));
-                        }
-                    }, 20000); // Set timeout to 20 seconds
+        let allData = [];
+        let iterations = articlesList.length / 50;
+        for (let i = 0; i < iterations; i++) {
+            const url = `https://en.wikipedia.org/w/api.php?action=query&prop=links&titles=${articlesList.join("|")}&eilimit=1000000&callback=?&eicontinue=0|2645&pllimit=max&format=json&origin=*`;
         
-                    fetch(`https://en.wikipedia.org/w/api.php?action=parse&page=${encodeURIComponent(article)}&format=json&origin=*`, {
-                        method: "GET",
-                        headers: {
-                            "Content-Type": "application/json",
-                        }
-                    }).then(response => {
-                        clearTimeout(timeout);
-                        if (response.ok) {
-                            return response.json().then(data => {
-                                data = reduceJSON(data);
-                                console.log(data);
-                                resolve(data);
-                            });
-                        } else {
-                            reject(new Error("Response not OK"));
-                        }
-                    }).catch(error => {
-                        if (retries < maxRetries) {
-                            retries++;
-                            console.log(`Retry ${retries} for ${article}`);
-                            clearTimeout(timeout);
-                            fetchWithRetry();
-                        } else {
-                            reject(error);
-                        }
-                    });
-                };
-        
-                fetchWithRetry();
+            let response = await fetch(url, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                }
             });
-        });
-        
-        const allData = await Promise.all(fetchPromises);
 
+            if (response.ok) {
+                const data = await response.json();
+                console.log(data);
+                const reduced = reduceJSON(data);
+                allData.push(reduced);
+            }
+        }
+        
         return {
             articles: allData
         };
